@@ -1,4 +1,4 @@
-import { SingleEvent } from "@teronis-js/event-dispatcher";
+import { ArgtiveEvent } from "@teronis/ts-event-dispatcher";
 
 interface IHandlerNameRevocablePair {
     [handlerName: string]: {
@@ -16,8 +16,8 @@ interface IHandlerProxy {
  * function in return that intercepts the execution of the function you passed in the first place.
  */
 export class HandlerMerger {
-    private preInterceptionEvent: SingleEvent;
-    private postInterceptionEvent: SingleEvent;
+    private preInterceptionEvent: ArgtiveEvent;
+    private postInterceptionEvent: ArgtiveEvent;
     private triggerAtLimit?: number;
     private proxies: IHandlerNameRevocablePair;
     private counter: number;
@@ -27,8 +27,8 @@ export class HandlerMerger {
      * @param triggerAtLimit A predetermined length of proxy calls that must proceed to trigger the interception events.
      */
     public constructor(triggerAtLimit?: number) {
-        this.preInterceptionEvent = new SingleEvent();
-        this.postInterceptionEvent = new SingleEvent();
+        this.preInterceptionEvent = new ArgtiveEvent();
+        this.postInterceptionEvent = new ArgtiveEvent();
         this.triggerAtLimit = triggerAtLimit;
         this.proxies = {} as IHandlerNameRevocablePair;
         this.counter = 0;
@@ -36,11 +36,11 @@ export class HandlerMerger {
 
     // getter
 
-    public getPreInterceptionEvent(): SingleEvent {
+    public getPreInterceptionEvent() {
         return this.preInterceptionEvent;
     }
 
-    public getPostInterceptionEvent(): SingleEvent {
+    public getPostInterceptionEvent() {
         return this.postInterceptionEvent;
     }
 
@@ -58,7 +58,7 @@ export class HandlerMerger {
      * @param handler It can only be anonymous, if you pass a name, otherwise an exception will be thrown.
      * @param name When it is passed, it will be preferred over the name of the passed handler.
      */
-    mergeWith(handler: Function, name?: string): Function {
+    mergeWith(handler: Function, name?: string) {
         name = this.getFunctionName(handler, name);
         const proxyHandler = this._mergeWith(handler, name);
         return proxyHandler;
@@ -69,7 +69,7 @@ export class HandlerMerger {
      * @param handler It can only be anonymous, if you pass a name, otherwise an exception will be thrown.
      * @param name When it is passed, it will be preferred over the name of the passed handler.
      */
-    replaceMerge(handler: Function, name?: string): Function {
+    replaceMerge(handler: Function, name?: string) {
         name = this.getFunctionName(handler, name);
 
         if (name in this.proxies) {
@@ -108,17 +108,17 @@ export class HandlerMerger {
 
         const proxyHandler: ProxyHandler<IHandlerProxy> = {
             get: (target, property, receiver) => {
-                return function (this: HandlerMerger, ...args) {
+                return function (this: HandlerMerger, ...args: any[]) {
                     this.counter++;
                     const fireInterceptionCallbacks = this.getCanTriggerInterceptionEvents();
 
                     if (fireInterceptionCallbacks)
-                        this.preInterceptionEvent.Invoke(args);
+                        this.preInterceptionEvent.invoke(args);
 
                     const result = handler(...args);
 
                     if (fireInterceptionCallbacks)
-                        this.postInterceptionEvent.Invoke(args);
+                        this.postInterceptionEvent.invoke(args);
 
                     return result;
                 }.bind(this);
@@ -135,7 +135,7 @@ export class HandlerMerger {
         // Return a wrapper function that points to the proxy function,
         // so that the original function gets called without being intercepted,
         // when the proxy got revoked.
-        return function (...args) {
+        return function (...args: any[]) {
             revocable.proxy.handler(...args);
         };
     }

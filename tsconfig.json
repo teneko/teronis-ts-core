@@ -5,7 +5,8 @@
         "declaration": true,
         "baseUrl": ".",
         "moduleResolution": "node",
-        "strictNullChecks": true
+        "strictNullChecks": true,
+        "strict": true
     },
     "include": [
         "src/**/*"

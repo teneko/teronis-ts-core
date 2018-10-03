@@ -1,7 +1,8 @@
 const path = require('path');
-const DtsBundlePlugin = require("dts-bundle-webpack");
+const DtsBundlePlugin = require("@teronis/webpack-dts-bundle");
 const TsConfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 const PackageFile = require("./package.json");
+const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
   mode: "development",
@@ -20,9 +21,10 @@ module.exports = {
       }
     ]
   },
+  // externals: [nodeExternals()],
   output: {
-    filename: path.basename(PackageFile.browser),
-    path: path.resolve(__dirname, path.dirname(PackageFile.browser)),
+    filename: path.basename(PackageFile.main),
+    path: path.resolve(__dirname, path.dirname(PackageFile.main)),
     libraryTarget: "umd"
   },
   resolve: {
@@ -32,9 +34,9 @@ module.exports = {
   },
   plugins: [new DtsBundlePlugin({
     name: PackageFile.name,
-    main: PackageFile.module,
+    main: PackageFile.source,
     // prevents deleting <baseDir>/**/*.d.ts outside of <baseDir>
-    baseDir: path.dirname(PackageFile.module),
+    baseDir: path.dirname(PackageFile.source),
     // absolute path to prevent the join of <baseDir> and <out>
     out: path.resolve(__dirname, PackageFile.types),
     removeSource: true,
