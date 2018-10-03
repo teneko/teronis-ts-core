@@ -1,5 +1,16 @@
 import { SingleEvent } from "@teronis-js/event-dispatcher";
 
+interface IHandlerNameRevocablePair {
+    [handlerName: string]: {
+        proxy: IHandlerProxy;
+        revoke: () => void;
+    };
+}
+
+interface IHandlerProxy {
+    handler: Function;
+}
+
 /**
  * This class can intercept the execution of passed functions. When you pass a function, you get a proxy
  * function in return that intercepts the execution of the function you passed in the first place.
@@ -8,7 +19,7 @@ export class HandlerMerger {
     private preInterceptionEvent: SingleEvent;
     private postInterceptionEvent: SingleEvent;
     private triggerAtLimit?: number;
-    private attachedHandlers: string[];
+    private proxies: IHandlerNameRevocablePair;
     private counter: number;
 
     /**
@@ -19,7 +30,7 @@ export class HandlerMerger {
         this.preInterceptionEvent = new SingleEvent();
         this.postInterceptionEvent = new SingleEvent();
         this.triggerAtLimit = triggerAtLimit;
-        this.attachedHandlers = [];
+        this.proxies = {} as IHandlerNameRevocablePair;
         this.counter = 0;
     }
 
@@ -61,9 +72,9 @@ export class HandlerMerger {
     replaceMerge(handler: Function, name?: string): Function {
         name = this.getFunctionName(handler, name);
 
-        if (name in this.attachedHandlers) {
-            this.attachedHandlers[name].revocable.revoke();
-            delete this.attachedHandlers[name];
+        if (name in this.proxies) {
+            this.proxies[name].revoke();
+            delete this.proxies[name];
         }
 
         const proxyHandler = this._mergeWith(handler, name);
@@ -72,7 +83,7 @@ export class HandlerMerger {
 
     private getFunctionName(handler: Function, name?: string): string {
         // the name of handler is by default === ""
-        name || handler.name;
+        name = name || handler.name;
 
         if (!name)
             throw "ArgumentException: @name can not be empty.";
@@ -89,48 +100,49 @@ export class HandlerMerger {
         if (!handler)
             throw "ArgumentException: @handler can not be null.";
 
-        if (typeof this.attachedHandlers[name] !== "undefined")
+        if (typeof this.proxies[name] !== "undefined")
             throw "ArgumentException: @name exists already.";
 
-        this.attachedHandlers[name] = {
-            handler: handler
-        };
+        // // provide 'this' as variable so that the user can bind 'this' on his own.
+        // const self = this;
 
-        const proxyHandler = {
-            get(target, propName) {
+        const proxyHandler: ProxyHandler<IHandlerProxy> = {
+            get: (target, property, receiver) => {
                 return function (this: HandlerMerger, ...args) {
-                    var handler = target[propName];
-                    this.attachedHandlers[name].name = name;
-                    this.attachedHandlers[name].arguments = args;
                     this.counter++;
                     const fireInterceptionCallbacks = this.getCanTriggerInterceptionEvents();
 
                     if (fireInterceptionCallbacks)
                         this.preInterceptionEvent.Invoke(args);
 
-                    this.attachedHandlers[name].result = handler(...args)
+                    const result = handler(...args);
 
                     if (fireInterceptionCallbacks)
                         this.postInterceptionEvent.Invoke(args);
 
-                    return this.attachedHandlers[name].result;
+                    return result;
                 }.bind(this);
             }
-        }
+        };
 
         // wrap handler up with proxy
         const revocable = Proxy.revocable({
             handler: handler
-        }, proxyHandler);
+        } as IHandlerProxy, proxyHandler);
 
-        this.attachedHandlers[name].revocable = revocable
-        // return proxy handler
-        return revocable.proxy.handler;
+        this.proxies[name] = revocable
+
+        // Return a wrapper function that points to the proxy function,
+        // so that the original function gets called without being intercepted,
+        // when the proxy got revoked.
+        return function (...args) {
+            revocable.proxy.handler(...args);
+        };
     }
 
     private getCanTriggerInterceptionEvents(): boolean {
         if (this.triggerAtLimit == null)
-            return this.counter === Object.keys(this.attachedHandlers).length;
+            return this.counter === Object.keys(this.proxies).length;
         else
             return this.counter === this.triggerAtLimit;
     }

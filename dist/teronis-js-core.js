@@ -336,7 +336,7 @@ function () {
     this.preInterceptionEvent = new _teronis_js_event_dispatcher__WEBPACK_IMPORTED_MODULE_0__["SingleEvent"]();
     this.postInterceptionEvent = new _teronis_js_event_dispatcher__WEBPACK_IMPORTED_MODULE_0__["SingleEvent"]();
     this.triggerAtLimit = triggerAtLimit;
-    this.attachedHandlers = [];
+    this.proxies = {};
     this.counter = 0;
   } // getter
 
@@ -387,9 +387,9 @@ function () {
     value: function replaceMerge(handler, name) {
       name = this.getFunctionName(handler, name);
 
-      if (name in this.attachedHandlers) {
-        this.attachedHandlers[name].revocable.revoke();
-        delete this.attachedHandlers[name];
+      if (name in this.proxies) {
+        this.proxies[name].revoke();
+        delete this.proxies[name];
       }
 
       var proxyHandler = this._mergeWith(handler, name);
@@ -400,7 +400,7 @@ function () {
     key: "getFunctionName",
     value: function getFunctionName(handler, name) {
       // the name of handler is by default === ""
-      name || handler.name;
+      name = name || handler.name;
       if (!name) throw "ArgumentException: @name can not be empty.";
       return name;
     }
@@ -413,44 +413,48 @@ function () {
   }, {
     key: "_mergeWith",
     value: function _mergeWith(handler) {
+      var _this = this;
+
       var name = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "";
       if (!handler) throw "ArgumentException: @handler can not be null.";
-      if (typeof this.attachedHandlers[name] !== "undefined") throw "ArgumentException: @name exists already.";
-      this.attachedHandlers[name] = {
-        handler: handler
-      };
+      if (typeof this.proxies[name] !== "undefined") throw "ArgumentException: @name exists already."; // // provide 'this' as variable so that the user can bind 'this' on his own.
+      // const self = this;
+
       var proxyHandler = {
-        get: function get(target, propName) {
+        get: function get(target, property, receiver) {
           return function () {
-            var handler = target[propName];
-            this.attachedHandlers[name].name = name;
+            this.counter++;
+            var fireInterceptionCallbacks = this.getCanTriggerInterceptionEvents();
 
             for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
               args[_key] = arguments[_key];
             }
 
-            this.attachedHandlers[name].arguments = args;
-            this.counter++;
-            var fireInterceptionCallbacks = this.getCanTriggerInterceptionEvents();
             if (fireInterceptionCallbacks) this.preInterceptionEvent.Invoke(args);
-            this.attachedHandlers[name].result = handler.apply(void 0, args);
+            var result = handler.apply(void 0, args);
             if (fireInterceptionCallbacks) this.postInterceptionEvent.Invoke(args);
-            return this.attachedHandlers[name].result;
-          }.bind(this);
+            return result;
+          }.bind(_this);
         }
       }; // wrap handler up with proxy
 
       var revocable = Proxy.revocable({
         handler: handler
       }, proxyHandler);
-      this.attachedHandlers[name].revocable = revocable; // return proxy handler
+      this.proxies[name] = revocable; // Return a wrapper function that points to the proxy function,
+      // so that the original function gets called without being intercepted,
+      // when the proxy got revoked.
 
-      return revocable.proxy.handler;
+      return function () {
+        var _revocable$proxy;
+
+        (_revocable$proxy = revocable.proxy).handler.apply(_revocable$proxy, arguments);
+      };
     }
   }, {
     key: "getCanTriggerInterceptionEvents",
     value: function getCanTriggerInterceptionEvents() {
-      if (this.triggerAtLimit == null) return this.counter === Object.keys(this.attachedHandlers).length;else return this.counter === this.triggerAtLimit;
+      if (this.triggerAtLimit == null) return this.counter === Object.keys(this.proxies).length;else return this.counter === this.triggerAtLimit;
     }
     /**
      * If a proxy functions gets called, the counter will be increased.
