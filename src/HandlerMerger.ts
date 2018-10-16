@@ -1,8 +1,4 @@
-import { ArgtiveEvent } from "@teronis/ts-event-dispatcher";
-
-interface IHandlerProxy {
-    handler: Function;
-}
+import { ArgtiveEvent } from "@teronis-js/event-dispatcher";
 
 interface IHandlerNameRevocablePair {
     [handlerName: string]: {

@@ -1,26 +1,30 @@
 const { assert } = require("chai");
 const JSDOM = require("jsdom").JSDOM;
-const { CoreUtilities } = require("../dist/teronis-ts-core");
+const { CoreUtilities } = require("../dist/teronis-js-core");
 
 describe("CoreUtilities", () => {
     describe("#findParentElement()", () => {
-        const jsdom = new JSDOM(`<div id="graph-section-template" name="container" style="display:none;">
-        <h5 id="graph-section-name" class="subhead">A Headline Text</h5>
-        <div id="graph-section-anchor-end" name="anchor" style="display:none;"></div>
+        const jsdom = new JSDOM(`<div data-graph-section-template name="container" style="display:none;">
+        <h5 data-graph-section-name class="subhead">A Headline Text</h5>
+        <div data-graph-section-anchor-end name="anchor" style="display:none;"></div>
         </div>`);
 
         const { window } = jsdom;
         const { document } = window;
 
+
         global.window = window;
         global.document = document;
 
-        const dataGraphSectionTemplateElement = document.getElementById("graph-section-template");
-        const dataGraphSectionNameElement = document.getElementById("graph-section-name");
-        const dataGraphSectionAnchorEndElement = document.getElementById("graph-section-anchor-end");
+        const $ = require("jquery");
+
+
+        const $dataGraphSectionTemplate = $("[data-graph-section-template]");
+        const $dataGraphSectionName = $("[data-graph-section-name]");
+        const $dataGraphSectionAnchorEnd = $("[data-graph-section-anchor-end]");
 
         it("element should be found by tag name", () => {
-            const element = CoreUtilities.findParentElement(dataGraphSectionNameElement, {
+            const element = CoreUtilities.findParentElement($dataGraphSectionName[0], {
                 successibleConditions: {
                     tagName: "div"
                 },
@@ -28,11 +32,11 @@ describe("CoreUtilities", () => {
             });
 
             assert.instanceOf(element, HTMLElement, "valid element was expected");
-            assert.strictEqual(element.getAttribute("name"), dataGraphSectionTemplateElement.getAttribute("name"), "element missmatch");
+            assert.strictEqual(element.getAttribute("name"), $dataGraphSectionTemplate.attr("name"), "element missmatch");
         });
 
         it("element should be found by custom evaluation handler", () => {
-            const element = CoreUtilities.findParentElement(dataGraphSectionAnchorEndElement, {
+            const element = CoreUtilities.findParentElement($dataGraphSectionAnchorEnd[0], {
                 successibleConditions: {
                     customEvaluationHandler: (element) => {
                         if (element.tagName.toLowerCase() === "div")
@@ -43,11 +47,11 @@ describe("CoreUtilities", () => {
             });
 
             assert.instanceOf(element, HTMLElement, "valid element was expected");
-            assert.strictEqual(element.getAttribute("name"), dataGraphSectionAnchorEndElement.getAttribute("name"), "element missmatch");
+            assert.strictEqual(element.getAttribute("name"), $dataGraphSectionAnchorEnd.attr("name"), "element missmatch");
         });
 
         it("should throw an error because of no giving conditions", () => {
-            assert.throw(() => CoreUtilities.findParentElement(dataGraphSectionNameElement, {
+            assert.throw(() => CoreUtilities.findParentElement($dataGraphSectionName[0], {
                 successibleConditions: {}
             }), Error);
         });

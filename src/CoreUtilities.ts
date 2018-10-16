@@ -212,7 +212,7 @@ export class CoreUtilities {
         else
             return path.filter((part) => typeof part === "string" && part !== "");
     }
-
+    
     /**
      * This function adds the ability to change its content via input and vice versa
      * @param target The element that will be toggled.
