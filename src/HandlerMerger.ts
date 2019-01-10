@@ -1,4 +1,4 @@
-import { ArgtiveEvent } from "@teronis-js/event-dispatcher";
+import { ArgtiveEvent } from "@teronis/ts-event-dispatcher";
 
 interface IHandlerNameRevocablePair {
     [handlerName: string]: {

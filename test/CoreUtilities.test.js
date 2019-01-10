@@ -1,6 +1,6 @@
 const { assert } = require("chai");
 const JSDOM = require("jsdom").JSDOM;
-const { CoreUtilities } = require("../dist/teronis-js-core");
+const { CoreUtilities } = require("../dist/teronis-ts-core");
 
 describe("CoreUtilities", () => {
     describe("#findParentElement()", () => {
