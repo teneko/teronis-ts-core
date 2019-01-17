@@ -1,14 +1,14 @@
 import { ArgtiveEvent } from "@teronis/ts-event-dispatcher";
 
+interface IHandlerProxy {
+    handler: Function;
+}
+
 interface IHandlerNameRevocablePair {
     [handlerName: string]: {
         proxy: IHandlerProxy;
         revoke: () => void;
     };
-}
-
-interface IHandlerProxy {
-    handler: Function;
 }
 
 /**
