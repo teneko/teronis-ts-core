@@ -1,6 +1,6 @@
 {
   "name": "@teronis/ts-core",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "A bunch of utility functions and classes.",
   "main": "dist/teronis-ts-core.js",
   "source": "src/index.ts",
