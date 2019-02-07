@@ -1,8 +1,7 @@
 {
   "name": "@teronis/ts-core",
   "version": "0.4.2",
-  "description": "",
-  "private": false,
+  "description": "A bunch of utility functions and classes.",
   "main": "dist/teronis-ts-core.js",
   "source": "src/index.ts",
   "types": "dist/teronis-ts-core.d.ts",
@@ -17,10 +16,11 @@
   },
   "keywords": [
     "teronis",
+    "typescript",
     "core"
   ],
   "author": "teroneko",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/teroneko/teronis-ts-core/issues"
   },
@@ -51,6 +51,8 @@
     "lodash": "^4.17.11"
   },
   "peerDependencies": {
-    "@teronis/ts-event-dispatcher": "~0.4.0"
+    "@teronis/ts-event-dispatcher": "~0.4.0",
+    "jquery": "^3.3.1",
+    "lodash": "^4.17.11"
   }
 }
