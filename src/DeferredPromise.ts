@@ -4,18 +4,15 @@ export interface IDeferredPromise<T = any> {
     reject: (value: any) => void;
 }
 
-export function createDeferredPromise<T = any>(): IDeferredPromise<T> {
-    let resolve: ((value: T) => void) | undefined;
-    let reject: ((value: any) => void) | undefined;
+export class DeferredPromise<T> {
+    public promise: Promise<T>;
+    public resolve: ((value: T) => void) | undefined;
+    public reject: ((value: any) => void) | undefined;
 
-    const promise = new Promise<T>((rs, rj) => {
-        resolve = rs;
-        reject = rj;
-    });
-
-    return {
-        promise,
-        resolve: resolve!,
-        reject: reject!
-    };
+    constructor() {
+        this.promise = new Promise<T>((rs, rj) => {
+            this.resolve = rs;
+            this.reject = rj;
+        });
+    }
 }
