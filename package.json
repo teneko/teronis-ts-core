@@ -6,9 +6,9 @@
   "source": "src/index.ts",
   "types": "dist/teronis-ts-core.d.ts",
   "scripts": {
-    "prepublishOnly": "npm run build",
-    "test": "mocha -r jsdom-global/register -r @teronis/ts-event-dispatcher || true",
-    "build": "webpack --config webpack.dev.config.js || true"
+    "build": "webpack --config webpack.dev.config.js",
+    "test": "mocha -r jsdom-global/register -r @teronis/ts-event-dispatcher",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -25,6 +25,10 @@
     "url": "https://github.com/teroneko/teronis-ts-core/issues"
   },
   "homepage": "https://github.com/teroneko/teronis-ts-core#readme",
+  "files": [
+    "dist",
+    "src"
+  ],
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.3.1",
