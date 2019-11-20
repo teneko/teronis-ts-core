@@ -2,6 +2,7 @@ import { ArgtiveEvent } from "@teronis/ts-event-dispatcher";
 
 interface IHandlerProxy {
     handler: Function;
+    called: boolean;
 }
 
 interface IHandlerNameRevocablePair {
@@ -13,7 +14,8 @@ interface IHandlerNameRevocablePair {
 
 /**
  * This class can intercept the execution of passed functions. When you pass a function, you get a proxy
- * function in return that intercepts the execution of the function you passed in the first place.
+ * function in return that intercepts the execution of the function you passed before. Then when any 
+ * proxy get called, the counter gets increased by one.
  */
 export class HandlerMerger {
     private preInterceptionEvent: ArgtiveEvent;
@@ -24,13 +26,13 @@ export class HandlerMerger {
 
     /**
      * 
-     * @param triggerAtLimit A predetermined length of proxy calls that must proceed to trigger the interception events.
+     * @param triggerAtLimit A predetermined amount of proxy calls that must happen to trigger the interception events.
      */
     public constructor(triggerAtLimit?: number) {
         this.preInterceptionEvent = new ArgtiveEvent();
         this.postInterceptionEvent = new ArgtiveEvent();
         this.triggerAtLimit = triggerAtLimit;
-        this.proxies = {} as IHandlerNameRevocablePair;
+        this.proxies = {};
         this.counter = 0;
     }
 
@@ -51,12 +53,19 @@ export class HandlerMerger {
         return this.counter;
     }
 
+    private getCanTriggerInterceptionEvents(): boolean {
+        if (this.triggerAtLimit == null)
+            return this.counter === Object.keys(this.proxies).length;
+        else
+            return this.counter === this.triggerAtLimit;
+    }
+
     /**
      * 
      * @param handler It can only be anonymous, if you pass a name, otherwise an exception will be thrown.
      * @param name When a name is passed, it will be preferred over the name of the passed handler.
      */
-    private _mergeWith(handler: Function, name: string = ""): Function {
+    private _mergeWith<Fn extends Function>(handler: Fn, name: string = ""): Fn {
         if (!handler)
             throw "ArgumentException: @handler can not be null.";
 
@@ -86,18 +95,19 @@ export class HandlerMerger {
         };
 
         // wrap handler up with proxy
-        const revocable = Proxy.revocable({
-            handler: handler
-        } as IHandlerProxy, proxyHandler);
+        const revocable = Proxy.revocable<IHandlerProxy>({
+            handler: handler,
+            called: true
+        }, proxyHandler);
 
         this.proxies[name] = revocable
 
         // Return a wrapper function that points to the proxy function,
         // so that the original function gets called without being intercepted,
         // when the proxy got revoked.
-        return function (...args: any[]) {
+        return (function (...args: any[]) {
             revocable.proxy.handler(...args);
-        };
+        }) as unknown as Fn;
     }
 
     private getFunctionName(handler: Function, name?: string): string {
@@ -115,7 +125,7 @@ export class HandlerMerger {
      * @param handler It can only be anonymous, if you pass a name, otherwise an exception will be thrown.
      * @param name When it is passed, it will be preferred over the name of the passed handler.
      */
-    public mergeWith(handler: Function, name?: string) {
+    public mergeWith<Fn extends Function>(handler: Fn, name?: string) {
         name = this.getFunctionName(handler, name);
         const proxyHandler = this._mergeWith(handler, name);
         return proxyHandler;
@@ -126,7 +136,7 @@ export class HandlerMerger {
      * @param handler It can only be anonymous, if you pass a name, otherwise an exception will be thrown.
      * @param name When it is passed, it will be preferred over the name of the passed handler.
      */
-    public replaceMerge(handler: Function, name?: string) {
+    public replaceMerge<Fn extends Function>(handler: Fn, name?: string) {
         name = this.getFunctionName(handler, name);
 
         if (name in this.proxies) {
@@ -136,13 +146,6 @@ export class HandlerMerger {
 
         const proxyHandler = this._mergeWith(handler, name);
         return proxyHandler;
-    }
-
-    private getCanTriggerInterceptionEvents(): boolean {
-        if (this.triggerAtLimit == null)
-            return this.counter === Object.keys(this.proxies).length;
-        else
-            return this.counter === this.triggerAtLimit;
     }
 
     /**

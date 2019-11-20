@@ -1,8 +1,11 @@
-const HandlerMerger = require("../dist/teronis-ts-core.js").HandlerMerger;
-const { assert } = require("chai");
+import { HandlerMerger } from "../dist/teronis-ts-core";
+import { assert } from "chai";
+
+// const HandlerMerger = require("../dist/teronis-ts-core.js").HandlerMerger;
+// const { assert } = require("chai");
 
 describe("HandlerMerger", function () {
-    let merger;
+    let merger : HandlerMerger;
 
     beforeEach(() => {
         merger = new HandlerMerger();

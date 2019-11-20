@@ -1,6 +1,6 @@
-const { assert } = require("chai");
-const JSDOM = require("jsdom").JSDOM;
-const { CoreUtilities } = require("../dist/teronis-ts-core");
+import { assert } from "chai";
+import { JSDOM } from "jsdom";
+import { CoreUtilities } from "../dist/teronis-ts-core";
 
 describe("CoreUtilities", () => {
     describe("#findParentElement()", () => {
@@ -12,12 +12,12 @@ describe("CoreUtilities", () => {
         const { window } = jsdom;
         const { document } = window;
 
-        global.window = window;
-        global.document = document;
+        // global.window = window;
+        // global.document = document;
 
-        const dataGraphSectionTemplateElement = document.getElementById("graph-section-template");
-        const dataGraphSectionNameElement = document.getElementById("graph-section-name");
-        const dataGraphSectionAnchorEndElement = document.getElementById("graph-section-anchor-end");
+        const dataGraphSectionTemplateElement = document.getElementById("graph-section-template")!;
+        const dataGraphSectionNameElement = document.getElementById("graph-section-name")!;
+        const dataGraphSectionAnchorEndElement = document.getElementById("graph-section-anchor-end")!;
 
         it("element should be found by tag name", () => {
             const element = CoreUtilities.findParentElement(dataGraphSectionNameElement, {
@@ -25,7 +25,7 @@ describe("CoreUtilities", () => {
                     tagName: "div"
                 },
                 verbose: true
-            });
+            })!;
 
             assert.instanceOf(element, HTMLElement, "valid element was expected");
             assert.strictEqual(element.getAttribute("name"), dataGraphSectionTemplateElement.getAttribute("name"), "element missmatch");
@@ -33,14 +33,9 @@ describe("CoreUtilities", () => {
 
         it("element should be found by custom evaluation handler", () => {
             const element = CoreUtilities.findParentElement(dataGraphSectionAnchorEndElement, {
-                successibleConditions: {
-                    customEvaluationHandler: (element) => {
-                        if (element.tagName.toLowerCase() === "div")
-                            return true;
-                    }
-                },
+                successibleConditions: { customEvaluationHandler: (element) => element.tagName.toLowerCase() === "div" },
                 verbose: true
-            });
+            })!;
 
             assert.instanceOf(element, HTMLElement, "valid element was expected");
             assert.strictEqual(element.getAttribute("name"), dataGraphSectionAnchorEndElement.getAttribute("name"), "element missmatch");
@@ -54,7 +49,7 @@ describe("CoreUtilities", () => {
     })
 
     describe("#modifyObject", () => {
-        var rootObj = null;
+        var rootObj : any = null;
 
         beforeEach(() => {
             rootObj = {
