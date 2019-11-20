@@ -51,46 +51,6 @@ export class HandlerMerger {
         return this.counter;
     }
 
-    // methods
-
-    /**
-     * 
-     * @param handler It can only be anonymous, if you pass a name, otherwise an exception will be thrown.
-     * @param name When it is passed, it will be preferred over the name of the passed handler.
-     */
-    mergeWith(handler: Function, name?: string) {
-        name = this.getFunctionName(handler, name);
-        const proxyHandler = this._mergeWith(handler, name);
-        return proxyHandler;
-    }
-
-    /**
-     * The function that has been added previously can be replaced by this method.
-     * @param handler It can only be anonymous, if you pass a name, otherwise an exception will be thrown.
-     * @param name When it is passed, it will be preferred over the name of the passed handler.
-     */
-    replaceMerge(handler: Function, name?: string) {
-        name = this.getFunctionName(handler, name);
-
-        if (name in this.proxies) {
-            this.proxies[name].revoke();
-            delete this.proxies[name];
-        }
-
-        const proxyHandler = this._mergeWith(handler, name);
-        return proxyHandler;
-    }
-
-    private getFunctionName(handler: Function, name?: string): string {
-        // the name of handler is by default === ""
-        name = name || handler.name;
-
-        if (!name)
-            throw "ArgumentException: @name can not be empty.";
-
-        return name;
-    }
-
     /**
      * 
      * @param handler It can only be anonymous, if you pass a name, otherwise an exception will be thrown.
@@ -110,14 +70,14 @@ export class HandlerMerger {
             get: (target, property, receiver) => {
                 return function (this: HandlerMerger, ...args: any[]) {
                     this.counter++;
-                    const fireInterceptionCallbacks = this.getCanTriggerInterceptionEvents();
+                    const shouldIntercept = this.getCanTriggerInterceptionEvents();
 
-                    if (fireInterceptionCallbacks)
+                    if (shouldIntercept)
                         this.preInterceptionEvent.invoke(args);
 
                     const result = handler(...args);
 
-                    if (fireInterceptionCallbacks)
+                    if (shouldIntercept)
                         this.postInterceptionEvent.invoke(args);
 
                     return result;
@@ -138,6 +98,44 @@ export class HandlerMerger {
         return function (...args: any[]) {
             revocable.proxy.handler(...args);
         };
+    }
+
+    private getFunctionName(handler: Function, name?: string): string {
+        // the name of handler is by default === ""
+        name = name || handler.name;
+
+        if (!name)
+            throw "ArgumentException: @name can not be empty.";
+
+        return name;
+    }
+
+    /**
+     * 
+     * @param handler It can only be anonymous, if you pass a name, otherwise an exception will be thrown.
+     * @param name When it is passed, it will be preferred over the name of the passed handler.
+     */
+    public mergeWith(handler: Function, name?: string) {
+        name = this.getFunctionName(handler, name);
+        const proxyHandler = this._mergeWith(handler, name);
+        return proxyHandler;
+    }
+
+    /**
+     * The function that has been added previously can be replaced by this method.
+     * @param handler It can only be anonymous, if you pass a name, otherwise an exception will be thrown.
+     * @param name When it is passed, it will be preferred over the name of the passed handler.
+     */
+    public replaceMerge(handler: Function, name?: string) {
+        name = this.getFunctionName(handler, name);
+
+        if (name in this.proxies) {
+            this.proxies[name].revoke();
+            delete this.proxies[name];
+        }
+
+        const proxyHandler = this._mergeWith(handler, name);
+        return proxyHandler;
     }
 
     private getCanTriggerInterceptionEvents(): boolean {
