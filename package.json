@@ -30,9 +30,9 @@
     "src"
   ],
   "devDependencies": {
-    "@babel/core": "^7.7.2",
-    "@babel/preset-env": "^7.7.1",
-    "@babel/preset-typescript": "^7.7.2",
+    "@babel/core": "^7.7.4",
+    "@babel/preset-env": "^7.7.4",
+    "@babel/preset-typescript": "^7.7.4",
     "@teronis/webpack-dts-bundle": "^1.0.2-teronified",
     "@types/chai": "^4.2.5",
     "@types/jsdom": "^12.2.4",
