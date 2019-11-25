@@ -12,9 +12,6 @@ describe("CoreUtilities", () => {
         const { window } = jsdom;
         const { document } = window;
 
-        // global.window = window;
-        // global.document = document;
-
         const dataGraphSectionTemplateElement = document.getElementById("graph-section-template")!;
         const dataGraphSectionNameElement = document.getElementById("graph-section-name")!;
         const dataGraphSectionAnchorEndElement = document.getElementById("graph-section-anchor-end")!;
